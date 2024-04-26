@@ -19,7 +19,7 @@ export const isPasswordValid = (password : string) : [boolean, number?] => {
     }
     
     
-    if(/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+    if(/[+-=_/';`~₩!@#$%^&*(),.?":{}|<>]/.test(password)) {
         passed[2] = true
     } else {
         return [false, 2]

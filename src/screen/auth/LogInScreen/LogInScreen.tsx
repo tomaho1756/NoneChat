@@ -1,6 +1,7 @@
 import { Alert, Button, SafeAreaView, StyleSheet, Text, TextInput, View } from "react-native";
 import { useRef, useState } from "react";
 import { isPasswordValid } from "./isPasswordValid.ts";
+import { setLogIn } from "../../../component/action/AuthAction.tsx";
 
 export const LogInScreen = () => {
     const [email, setEmail] = useState<string>("");
@@ -37,7 +38,7 @@ export const LogInScreen = () => {
                 
             }
         } else {
-            //로그인
+            setLogIn({ email, password })
         }
     };
     
