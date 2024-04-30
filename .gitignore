@@ -34,11 +34,16 @@ local.properties
 *.keystore
 !debug.keystore
 
+src/config/server.json
+
+
 # node.js
 #
 node_modules/
 npm-debug.log
 yarn-error.log
+
+
 
 # fastlane
 #
@@ -72,3 +77,4 @@ yarn-error.log
 !.yarn/releases
 !.yarn/sdks
 !.yarn/versions
+/src/config/server.json
