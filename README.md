@@ -2,13 +2,13 @@
 
 > gitmoji
 
-| Emoji | Description     | Emoji | Description           |
-| --- |-----------------| -- |-----------------------|
-| 🎨 | 코드의 형식 / 구조를 변경 | 🔨 | 코드를 리팩토링 할 때          |
-| 💄 | UI / style 개선시  | 🔥 | 코드 또는 파일 제거할 때        |
-| 📚 | 문서를 쓸 때         | 💎 | 버전 변경                 |
-| 🚑 | 버그를 고칠 때        | ⚡️ | 새로운 코드/기능을 추가할때       |
-| 🚜 | 파일 구조를 변경할 때    | 🚀 | 배포 / 개발 작업 과 관련된 모든 것 |
+| Emoji | Description      | Emoji | Description           |
+| --- |------------------| -- |-----------------------|
+| 🎨 | 코드의 형식 / 구조를 변경  | 🔨 | 코드를 리팩토링 할 때          |
+| 💄 | UI / style 개선시   | 🔥 | 코드 또는 파일 제거할 때        |
+| 📚 | 문서를 쓸 때          | 💎 | 버전 변경                 |
+| 🚑 | 버그를 고칠 때         | ⚡️ | 새로운 파일/폴더를 생성할 때      |
+| ✨ | 새로운 기능/코드를 추가할 때 | 🚀 | 배포 / 개발 작업 과 관련된 모든 것 |
 ---
 
 - Comit Message style
@@ -19,6 +19,7 @@ type : subject
 
 - type
    - `Feat` : 새로운 기능 추가
+   - `Add` : 코드를 추가
    - `Fix` : 버그 수정
    - `Refactor` : 코드 리팩토링
    - `Create` : 파일 또는 폴더를 생성
@@ -51,4 +52,7 @@ bun install react-native-safe-area-context
 bun install react-native-gesture-handler
 bun install react-native-screens
 bun install @react-native-community/masked-view
+bun install typescript
+bun install react-native-date-picker
+bun install react-native-vector-icons
 ```

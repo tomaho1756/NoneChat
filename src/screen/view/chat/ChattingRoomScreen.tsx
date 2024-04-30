@@ -1,10 +1,10 @@
 import { SafeAreaView, Text, View } from "react-native";
 
-export const SignInScreen = () => {
+export const ChattingRoomScreen = () => {
     return (
         <SafeAreaView>
             <View>
-                <Text>Sign Inn</Text>
+                <Text>ChattingRooms</Text>
             </View>
         </SafeAreaView>
     )
