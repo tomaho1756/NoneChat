@@ -1,10 +1,24 @@
-import { Alert, Button, Pressable, SafeAreaView, StyleSheet, Text, TextInput, View } from "react-native";
+import {
+    Alert,
+    Button,
+    Keyboard,
+    Pressable,
+    SafeAreaView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableWithoutFeedback,
+    View
+} from "react-native";
 import { useEffect, useRef, useState } from "react";
 import { isPasswordValid } from "./isPasswordValid.ts";
 import DatePicker from "react-native-date-picker";
-import { useEmailVerify, useSignUp } from "../../component/action/AuthAction.tsx";
+import { sendEmail, useEmailVerify, useSignUp } from "../../component/action/AuthAction.tsx";
+import { MainStackNavigationList } from "../../type/global/navigationType.ts";
+import { NavigationProp } from "@react-navigation/native";
+import store from "../../state/store.ts";
 
-export const SignUpScreen : React.FC<{navigation : any}> = ({navigation}) => {
+export const SignUpScreen : React.FC<{navigation : NavigationProp<MainStackNavigationList>}> = ({navigation}) => {
     const [email, setEmail] = useState<string>("");
     const [emailCode, setEmailCode] = useState<string>("");
     const [password, setPassword] = useState<string>("");
@@ -13,7 +27,7 @@ export const SignUpScreen : React.FC<{navigation : any}> = ({navigation}) => {
     const [openBirth, setOpenBirth] = useState<boolean>(false)
     const [isEmailVerified, setIsEmailVerified] = useState<boolean>(false)
     
-    const [verifyToken, sendEmail, checkVerify] = useEmailVerify()
+    const [verifyToken, checkVerify] = useEmailVerify()
     const [isLoading, error, setSignup] = useSignUp()
     
     const nameRef = useRef<TextInput>(null);
@@ -34,18 +48,23 @@ export const SignUpScreen : React.FC<{navigation : any}> = ({navigation}) => {
     }, [verifyToken]);
     
     useEffect(() => {
-        if (!isLoading) {
-            if (error == "[Error : MEMBER-002]") {
-                Alert.alert("경고", "이메일의 유저가 존재합니다.", [{text : "확인"}]);
-            }
-            else if (error == "[Error : EMAIL-003]") {
-                Alert.alert("경고", "이메일과 코드가 맞지 않습니다", [{text : "확인", onPress: () => emailRef.current?.focus()}]);
-            }
-            else if (error == "[Error : EMAIL-002]") {
-                Alert.alert("경고", "이메일이 존재하지 않습니다.", [{text : "확인", onPress: () => emailRef.current?.focus()}]);
-            }
-            else if (error == "") {
-                Alert.alert("성공", "회원가입이 완료되었습니다", [{text : "확인", onPress: () => navigation.navigate('Login') }]);
+        if(name.length != 0) {
+            if (!isLoading) {
+                if (error == "[Error : MEMBER-002]") {
+                    Alert.alert("경고", "이메일의 유저가 존재합니다.", [{text : "확인"}]);
+                }
+                else if (error == "[Error : EMAIL-003]") {
+                    Alert.alert("경고", "이메일과 코드가 맞지 않습니다", [{text : "확인", onPress: () => emailRef.current?.focus()}]);
+                }
+                else if (error == "[Error : EMAIL-002]") {
+                    Alert.alert("경고", "이메일이 존재하지 않습니다.", [{text : "확인", onPress: () => emailRef.current?.focus()}]);
+                }
+                else if (error == "") {
+                    Alert.alert("성공", "회원가입이 완료되었습니다", [{text : "확인", onPress: () => {
+                            navigation.navigate("Login");
+                            store.screen.setState({currentScreen : "LogIn"})
+                        }}]);
+                }
             }
         }
     }, [isLoading]);
@@ -59,7 +78,6 @@ export const SignUpScreen : React.FC<{navigation : any}> = ({navigation}) => {
                 Alert.alert("경고", "올바른 이메일 형식을 지켜주세요", [{ text: "확인", onPress: () => emailRef.current?.focus() }]);
             }
             else {
-                //@ts-ignore
                 Alert.alert("성공", "인증번호가 전송되었습니다", [{text : "확인", onPress : () => {sendEmail(email)}}]);
             }
         }
@@ -87,7 +105,7 @@ export const SignUpScreen : React.FC<{navigation : any}> = ({navigation}) => {
                         break
                     }
                     case 2 : {
-                        Alert.alert("경고", "비밀번호는 특시기호를 포함해야 합니다", [{
+                        Alert.alert("경고", "비밀번호는 특수기호를 포함해야 합니다", [{
                             text: "확인",
                             onPress: () => pwRef.current?.focus()
                         }]);
@@ -123,86 +141,90 @@ export const SignUpScreen : React.FC<{navigation : any}> = ({navigation}) => {
     
     return (
         <SafeAreaView style={{flex : 1}}>
-            <View style={styles.container}>
-                <DatePicker
-                    modal
-                    open={openBirth}
-                    date={birth}
-                    mode="date"
-                    onConfirm={(date) => {
-                        setOpenBirth(false)
-                        setBirth(date)
-                    }}
-                    onCancel={() => {
-                        setOpenBirth(false)
-                    }}
-                />
-                <Text style={styles.title}>None Chat</Text>
-                <TextInput
-                    ref={nameRef}
-                    style={[styles.textInput]}
-                    placeholder={"name"}
-                    autoFocus={true}
-                    autoCapitalize="none"
-                    onChangeText={input => {
-                        setName(input);
-                    }}
-                />
-                <View style={[styles.textInput,{padding : 0, alignItems: 'center', justifyContent: 'space-evenly', flexDirection: 'row', backgroundColor: '#FFFFFF'}]}>
-                    <Button title={"생년월일"} onPress={() => setOpenBirth(true)}></Button>
-                    <Text style={{fontSize : 20, fontWeight : "400"}}>{`|`}</Text>
-                    <Text style={{fontSize : 16, fontWeight : "500"}}>{`${birth.getFullYear()}/${birth.getMonth()+1}/${birth.getDate()}`}</Text>
-                </View>
-                <View style={{flexDirection: "row", alignItems: "center"}}>
-                    <TextInput
-                        ref={emailRef}
-                        style={[styles.textInput,{width: 250, marginBottom:-5}]}
-                        placeholder={"email@example.com"}
-                        autoCapitalize="none"
-                        onChangeText={input => {
-                            setEmail(input);
+            <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
+                <View style={styles.container}>
+                    <DatePicker
+                        modal
+                        open={openBirth}
+                        date={birth}
+                        mode="date"
+                        onConfirm={(date) => {
+                            setOpenBirth(false)
+                            setBirth(date)
+                        }}
+                        onCancel={() => {
+                            setOpenBirth(false)
                         }}
                     />
-                    <View style={{width : 50, marginBottom:-12.5}}>
-                        <Button title={"인증"} onPress={() => textEnterEdit({ type: 0 })}></Button>
-                    </View>
-                
-                </View>
-                <View style={{flexDirection: "row", alignItems: "center"}}>
+                    <Text style={styles.title}>None Chat</Text>
                     <TextInput
-                        ref={codeRef}
-                        style={[styles.textInput,{width: 250}]}
-                        placeholder={"code"}
+                        enablesReturnKeyAutomatically
+                        ref={nameRef}
+                        style={[styles.textInput]}
+                        placeholder={"name"}
+                        autoFocus={true}
+                        autoCapitalize="none"
+                        onChangeText={input => {
+                            setName(input);
+                        }}
+                    />
+                    <View style={[styles.textInput,{padding : 0, alignItems: 'center', justifyContent: 'space-evenly', flexDirection: 'row', backgroundColor: '#FFFFFF'}]}>
+                        <Button title={"생년월일"} onPress={() => setOpenBirth(true)}></Button>
+                        <Text style={{fontSize : 20, fontWeight : "400"}}>{`|`}</Text>
+                        <Text style={{fontSize : 16, fontWeight : "500"}}>{`${birth.getFullYear()}/${birth.getMonth()+1}/${birth.getDate()}`}</Text>
+                    </View>
+                    <View style={{flexDirection: "row", alignItems: "center"}}>
+                        <TextInput
+                            ref={emailRef}
+                            style={[styles.textInput,{width: 250, marginBottom:-5}]}
+                            placeholder={"email@example.com"}
+                            autoCapitalize="none"
+                            onChangeText={input => {
+                                setEmail(input);
+                            }}
+                        />
+                        <View style={{width : 50, marginBottom:-12.5}}>
+                            <Button title={"인증"} onPress={() => textEnterEdit({ type: 0 })}></Button>
+                        </View>
+                    
+                    </View>
+                    <View style={{flexDirection: "row", alignItems: "center"}}>
+                        <TextInput
+                            ref={codeRef}
+                            style={[styles.textInput,{width: 250}]}
+                            placeholder={"code"}
+                            autoCapitalize="none"
+                            clearTextOnFocus={true}
+                            onChangeText={input => {
+                                setEmailCode(input);
+                            }}
+                        />
+                        <View style={{width : 50, marginBottom:-12.5}}>
+                            <Button title={"확인"} onPress={() => textEnterEdit({ type: 1 })}></Button>
+                        </View>
+                    </View>
+                    <TextInput
+                        ref={pwRef}
+                        style={[styles.textInput,{marginBottom:25}]}
+                        placeholder={"password"}
                         autoCapitalize="none"
                         clearTextOnFocus={true}
                         onChangeText={input => {
-                            setEmailCode(input);
+                            setPassword(input);
+                        }}
+                        onSubmitEditing={() => {
+                            textEnterEdit({ type: 2 });
                         }}
                     />
-                    <View style={{width : 50, marginBottom:-12.5}}>
-                        <Button title={"확인"} onPress={() => textEnterEdit({ type: 1 })}></Button>
-                    </View>
+                    <Button title={"회원가입하기"} onPress={() => {
+                        textEnterEdit({ type: 3 });
+                    }}/>
+                    <Button title={"로그인으로 돌아가기"} onPress={() => {
+                        navigation.navigate("Login");
+                        store.screen.setState({currentScreen : "LogIn"})
+                    }}/>
                 </View>
-                <TextInput
-                    ref={pwRef}
-                    style={[styles.textInput,{marginBottom:25}]}
-                    placeholder={"password"}
-                    autoCapitalize="none"
-                    clearTextOnFocus={true}
-                    onChangeText={input => {
-                        setPassword(input);
-                    }}
-                    onEndEditing={() => {
-                        textEnterEdit({ type: 2 });
-                    }}
-                />
-                <Button title={"회원가입하기"} onPress={() => {
-                    textEnterEdit({ type: 3 });
-                }}/>
-                <Button title={"로그인으로 돌아가기"} onPress={() => {
-                    navigation.navigate("Login");
-                }}/>
-            </View>
+            </TouchableWithoutFeedback>
         </SafeAreaView>
     )
 }

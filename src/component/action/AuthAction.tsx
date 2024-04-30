@@ -1,17 +1,9 @@
 import {getUrl} from "../../config/server.ts"
 import store from "../../state/store.ts";
 import { useState } from "react";
+import {responseJsonType} from "../../type/global/responceType.ts";
+import axios from "axios";
 
-interface responseJsonType {
-    status: number,
-    success: boolean,
-    state: string,
-    message: string,
-    data?: {
-        accessToken?: string,
-        refreshToken?: string,
-    }
-}
 
 export const useLogIn = () => {
     const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -40,53 +32,46 @@ export const useLogIn = () => {
                 throw new Error(jsonData.state);
             }
             
-            // const {setAuth} = store(state => state.auth(state => state))
             
             
-            //@ts-ignore
-            store.getState().auth.getState().setAuth({accessToken : jsonData.data?.accessToken.split(" ")[1], refreshToken : jsonData.data?.refreshToken.split(" ")[1], isLogIn : true, errorMessage : ""})
+            store.auth.setState({accessToken : jsonData.data?.accessToken, refreshToken : jsonData.data?.refreshToken, isLogIn : true, errorMessage : ""})
             setIsLoading(false);
-            
+            return true
         } catch(error) {
-            //@ts-ignore
-            store.getState().auth.getState().setAuth({accessToken : "", refreshToken : "", isLogIn : false, errorMessage : error})
+            store.auth.setState({accessToken : "", refreshToken : "", isLogIn : false, errorMessage : `${error}`})
             setIsLoading(false);
         }
     };
-    return [isLoading, setLogIn]
+    return [isLoading, setLogIn] as const;
 }
 
 export const useSignUp = () => {
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [error, setError] = useState<string>("");
     
-    const setSignUp = async ({name, email, password, birth, verifyToken} : {name : string, email : string, password : string, birth : string, verifyToken : string}) => {
-        setIsLoading(true);
+    const setSignUp = async ({name, email, password, birth, verifyToken} : {name : string, email : string, password : string, birth : string, verifyToken : string}) : Promise<void> => {
         console.log(name, email, password, birth, verifyToken);
+        console.log(`${getUrl(0,"member/register")}`);
+        setIsLoading(true);
         try {
-            const response : Response = await fetch(
+            const response : Response = await axios.post(
                 `${getUrl(0,"member/register")}`,
                 {
-                    method: "POST",
-                    headers: {
+                    name : `${ name }`,
+                    email : `${ email }`,
+                    password : `${ password }`,
+                    birth : `${ birth }`,
+                    token : `${ verifyToken }`
+                },
+                {
+                    headers : {
                         "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({
-                        name : name,
-                        email : email,
-                        password : password,
-                        birth : birth,
-                        token : verifyToken,
-                    }),
+                    }
                 }
             );
             
-            const jsonData : responseJsonType = await response.json()
+            console.log(response);
             
-            if (jsonData.status != 200) {
-                throw new Error(jsonData.state);
-            }
-            console.log(jsonData)
             setError("")
             setIsLoading(false);
         } catch (err) {
@@ -95,39 +80,36 @@ export const useSignUp = () => {
             setIsLoading(false);
         }
     }
-    return [isLoading, error, setSignUp]
+    return [isLoading, error, setSignUp] as const;
+}
+
+export const sendEmail = async (email : string) : Promise<void> => {
+    try {
+        await fetch(
+            `${getUrl(0, "email/send")}?email=${encodeURIComponent(email)}`,
+            {
+                method: "GET",
+                headers: {
+                    contentType: "application/json",
+                }
+            }
+        );
+        
+    } catch (error) {
+        console.error(error)
+    }
 }
 
 export const useEmailVerify = () => {
     const [verifyToken, setToken] = useState("")
-    
-    const sendEmail = async (email : string) => {
-        try {
-            const response : Response = await fetch(
-                `${getUrl(0, "email/send")}?email=${encodeURIComponent(email)}`,
-                {
-                    method: "GET",
-                    headers: {
-                        "Content-Type": "application/json"
-                    }
-                }
-            );
-            
-            const jsonData : responseJsonType = await response.json()
-            console.log(jsonData)
-        } catch (error) {
-            console.error(error);
-        }
-    }
-    
-    const checkVerify = async (code : string) => {
+    const checkVerify = async (code : string) : Promise<void> => {
         try {
             const response : Response = await fetch(
                 `${getUrl(0, "email/verify")}?code=${encodeURIComponent(code)}`,
                 {
                     method: "GET",
                     headers: {
-                        "Content-Type": "application/json"
+                        contentType: "application/json"
                     }
                 }
             );
@@ -136,11 +118,10 @@ export const useEmailVerify = () => {
             if (jsonData.status != 200) {
                 throw new Error(jsonData.state);
             }
-            console.log(jsonData)
             setToken(`${jsonData.data}`)
         } catch (error) {
             setToken("err")
         }
     }
-    return [verifyToken ,sendEmail, checkVerify];
+    return [verifyToken ,sendEmail, checkVerify] as const;
 }
