@@ -1,10 +1,22 @@
-import { Alert, Button, SafeAreaView, StyleSheet, Text, TextInput, View } from "react-native";
+import {
+    Alert,
+    Button,
+    Keyboard,
+    SafeAreaView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableWithoutFeedback,
+    View
+} from "react-native";
 import { useEffect, useRef, useState } from "react";
 import { isPasswordValid } from "./isPasswordValid.ts";
 import store from "../../state/store.ts";
 import { useLogIn } from "../../component/action/AuthAction.tsx";
+import { MainStackNavigationList } from "../../type/global/navigationType.ts";
+import { NavigationProp } from "@react-navigation/native";
 
-export const LogInScreen : React.FC<{navigation : any}> = ({navigation}) => {
+export const LogInScreen : React.FC<{navigation : NavigationProp<MainStackNavigationList>}> = ({navigation}) => {
     const [email, setEmail] = useState<string>("");
     const [password, setPassword] = useState<string>("");
     
@@ -12,17 +24,28 @@ export const LogInScreen : React.FC<{navigation : any}> = ({navigation}) => {
     
     const emailRef = useRef<TextInput>(null);
     const pwRef = useRef<TextInput>(null);
-    //@ts-ignore
-    const {accessToken, refreshToken, errorMessage, isLogIn} = store(state => state.auth(state => state))
+    const {errorMessage, isLogIn} = store.auth.getState()
     
     useEffect(() => {
-        isLoading ?
-            console.log("loading...") :
-            console.log(accessToken, refreshToken, isLogIn, errorMessage)
         if (!isLoading) {
             if (isLogIn) {
-                Alert.alert("성공", "로그인이 완료되었습니다", [{text : "확인", onPress: () => navigation.navigate('Main') }]);
+                Alert.alert("성공", "로그인이 완료되었습니다", [{text : "확인", onPress: () => {
+                        navigation.navigate("WorkSpace");
+                        store.screen.setState({currentScreen : "WorkSpace"})
+                    } }]);
+            } else {
+                if (`${errorMessage}`.includes("MEMBER-001")) {
+                    Alert.alert("경고", "계정이 존재하지 않습니다", [{ text: "확인"}]);
+                }
+                else if (`${errorMessage}`.includes("LOGIN-001") || `${errorMessage}`.includes("LOGIN-003")) {
+                    Alert.alert("경고", "다시 로그인해 주세요", [{ text: "확인"}]);
+                }
+                else if (`${errorMessage}`.includes("LOGIN-002")) {
+                    Alert.alert("경고", "비밀번호가 일치하지 않습니다", [{ text: "확인", onPress: () => pwRef.current?.focus() }]);
+                }
             }
+        } else {
+            console.log("loading...")
         }
     }, [isLoading]);
     
@@ -44,7 +67,7 @@ export const LogInScreen : React.FC<{navigation : any}> = ({navigation}) => {
                     break
                 }
                 case 2 : {
-                    Alert.alert("경고", "비밀번호는 특시기호를 포함해야 합니다", [{ text: "확인", onPress: () => pwRef.current?.focus() }]);
+                    Alert.alert("경고", "비밀번호는 특수기호를 포함해야 합니다", [{ text: "확인", onPress: () => pwRef.current?.focus() }]);
                     break
                 }
                 default : {
@@ -54,50 +77,59 @@ export const LogInScreen : React.FC<{navigation : any}> = ({navigation}) => {
                 
             }
         } else {
-            //@ts-ignore
             setLogIn({ email, password })
         }
     };
     
     return (
         <SafeAreaView style={{flex : 1}}>
-            <View style={styles.container}>
-                <Text style={styles.title}>None Chat</Text>
-                <View>
-                    <TextInput
-                        ref={emailRef}
-                        style={styles.textInput}
-                        placeholder={"email@example.com"}
-                        autoCapitalize="none"
-                        autoFocus={true}
-                        onChangeText={input => {
-                            setEmail(input);
-                        }}
-                        onSubmitEditing={() => {
+            <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
+                <View style={styles.container}>
+                    <Text style={styles.title}>None Chat</Text>
+                    <View>
+                        <TextInput
+                            autoComplete={"off"}
+                            enablesReturnKeyAutomatically
+                            inputMode="email"
+                            ref={emailRef}
+                            style={styles.textInput}
+                            placeholder={"email@example.com"}
+                            autoCapitalize="none"
+                            autoFocus={true}
+                            onChangeText={input => {
+                                setEmail(input);
+                            }}
+                            onSubmitEditing={() => {
+                                textEnterEdit({ type: 1 });
+                            }}
+                        />
+                        <TextInput
+                            enablesReturnKeyAutomatically
+                            ref={pwRef}
+                            style={[styles.textInput,{marginBottom:25}]}
+                            placeholder={"Password!"}
+                            autoCapitalize="none"
+                            secureTextEntry={true}
+                            autoCorrect={false}
+                            autoComplete={"off"}
+                            clearTextOnFocus={true}
+                            onChangeText={input => {
+                                setPassword(input);
+                            }}
+                            onSubmitEditing={() => {
+                                textEnterEdit({ type: 0 });
+                            }}
+                        />
+                        <Button title={"로그인"} onPress={() => {
                             textEnterEdit({ type: 1 });
-                        }}
-                    />
-                    <TextInput
-                        ref={pwRef}
-                        style={[styles.textInput,{marginBottom:25}]}
-                        placeholder={"Password!"}
-                        autoCapitalize="none"
-                        clearTextOnFocus={true}
-                        onChangeText={input => {
-                            setPassword(input);
-                        }}
-                        onSubmitEditing={() => {
-                            textEnterEdit({ type: 0 });
-                        }}
-                    />
-                    <Button title={"로그인"} onPress={() => {
-                        textEnterEdit({ type: 1 });
-                    }}/>
-                    <Button title={"계정이 없으신가요?"} onPress={() => {
-                        navigation.navigate("SignUp");
-                    }}/>
+                        }}/>
+                        <Button title={"계정이 없으신가요?"} onPress={() => {
+                            navigation.navigate("SignUp");
+                            store.screen.setState({currentScreen : "SignUp"});
+                        }}/>
+                    </View>
                 </View>
-            </View>
+            </TouchableWithoutFeedback>
         </SafeAreaView>
     )
 }
